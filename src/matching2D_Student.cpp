@@ -7,11 +7,7 @@ using namespace std;
 void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
                       vector<cv::DMatch> &matches, string descriptorType, string matcherType, string selectorType)
 {
-    if(descSource.cols != descRef.cols  || descSource.rows != descRef.rows)
-        return;
     
-    
-
     // configure matcher
     bool crossCheck = false;
     cv::Ptr<cv::DescriptorMatcher> matcher;
@@ -39,7 +35,10 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
     { // nearest neighbor (best match)
+        double t = (double)cv::getTickCount();
         matcher->match(descSource, descRef, matches); // Finds the best match for each descriptor in desc1
+        t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
+        cout << " (NN) with n=" << matches.size() << " matches in " << 1000 * t / 1.0 << " ms" << endl;
     }
     else if (selectorType.compare("SEL_KNN") == 0)
     { // k nearest neighbors (k=2)
@@ -69,11 +68,11 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
 void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descriptors, string descriptorType)
 {
 
-
     // select appropriate descriptor
     cv::Ptr<cv::DescriptorExtractor> extractor;
 
-    enum detectorTypeEnum{
+    enum detectorTypeEnum
+    {
         BRISK,
         BRIEF,
         ORB,
@@ -83,40 +82,39 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     };
 
     std::unordered_map<string, detectorTypeEnum> map{
-        {"BRISK",BRISK},
-        {"BRIEF",BRIEF},
-        {"ORB",ORB},
-        {"FREAK",FREAK},
-        {"AKAZE",AKAZE},
-        {"SIFT",SIFT}
-    };
+        {"BRISK", BRISK},
+        {"BRIEF", BRIEF},
+        {"ORB", ORB},
+        {"FREAK", FREAK},
+        {"AKAZE", AKAZE},
+        {"SIFT", SIFT}};
 
     switch (map[descriptorType])
     {
 
-        case BRISK:
-            extractor = cv::BRISK::create();
-            break;
-        
-        case BRIEF:
-            extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
-            break;
+    case BRISK:
+        extractor = cv::BRISK::create();
+        break;
 
-        case ORB:
-            extractor = cv::ORB::create();
-            break;
-        
-        case FREAK:
-            extractor = cv::xfeatures2d::FREAK::create();
-            break;
+    case BRIEF:
+        extractor = cv::xfeatures2d::BriefDescriptorExtractor::create();
+        break;
 
-        case AKAZE:
-            extractor = cv::AKAZE::create();
-            break;
-        
-        case SIFT:
-            extractor = cv::xfeatures2d::SIFT::create();
-            break;
+    case ORB:
+        extractor = cv::ORB::create();
+        break;
+
+    case FREAK:
+        extractor = cv::xfeatures2d::FREAK::create();
+        break;
+
+    case AKAZE:
+        extractor = cv::AKAZE::create();
+        break;
+
+    case SIFT:
+        extractor = cv::xfeatures2d::SIFT::create();
+        break;
     }
 
     // perform feature description
@@ -124,7 +122,6 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     extractor->compute(img, keypoints, descriptors);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     cout << descriptorType << " descriptor extraction in " << 1000 * t / 1.0 << " ms" << endl;
-
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
@@ -208,11 +205,13 @@ void detKeypointsHarris(vector<cv::KeyPoint> &keypoints, cv::Mat &img, bool bVis
     }
 }
 
-void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis){
+void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::string detectorType, bool bVis)
+{
 
     cv::Ptr<cv::FeatureDetector> detector;
 
-    enum detectorTypeEnum{
+    enum detectorTypeEnum
+    {
         FAST,
         BRISK,
         ORB,
@@ -221,50 +220,48 @@ void detKeypointsModern(vector<cv::KeyPoint> &keypoints, cv::Mat &img, std::stri
     };
 
     std::unordered_map<string, detectorTypeEnum> map{
-        {"FAST",FAST},
-        {"BRISK",BRISK},
-        {"ORB",ORB},
-        {"AKAZE",AKAZE},
-        {"SIFT",SIFT}
-    };
+        {"FAST", FAST},
+        {"BRISK", BRISK},
+        {"ORB", ORB},
+        {"AKAZE", AKAZE},
+        {"SIFT", SIFT}};
 
     switch (map[detectorType])
     {
-        case FAST:
-            detector = cv::FastFeatureDetector::create();
-            break;
+    case FAST:
+        detector = cv::FastFeatureDetector::create();
+        break;
 
-        case BRISK:
-            detector = cv::BRISK::create();
-            break;
+    case BRISK:
+        detector = cv::BRISK::create();
+        break;
 
-        case ORB:
-            detector = cv::ORB::create();
-            break;
+    case ORB:
+        detector = cv::ORB::create();
+        break;
 
-        case AKAZE:
-            detector = cv::AKAZE::create();
-            break;
+    case AKAZE:
+        detector = cv::AKAZE::create();
+        break;
 
-        case SIFT:
-            detector = cv::xfeatures2d::SIFT::create();
-            break;
+    case SIFT:
+        detector = cv::xfeatures2d::SIFT::create();
+        break;
     }
 
     double t = (double)cv::getTickCount();
     detector->detect(img, keypoints);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
-    cout << detectorType <<" detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
+    cout << detectorType << " detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
 
     // visualize results
     if (bVis)
     {
         cv::Mat visImage = img.clone();
         cv::drawKeypoints(img, keypoints, visImage, cv::Scalar::all(-1), cv::DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
-        string windowName = detectorType+" Corner Detector Results";
+        string windowName = detectorType + " Corner Detector Results";
         cv::namedWindow(windowName, 6);
         imshow(windowName, visImage);
         cv::waitKey(0);
     }
-
 }

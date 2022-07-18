@@ -159,5 +159,44 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+
+    std::unordered_map<int,std::unordered_map<int,int>> occurences;
+
+    int prevId,currId;
+
+    for(cv::DMatch match : matches){
+        // cout<< prevFrame.keypoints[ match.queryIdx].pt.x<<" , "<< currFrame.keypoints[ match.trainIdx].pt.x<<endl; 
+        prevId = -1;
+        for(BoundingBox box : prevFrame.boundingBoxes){
+            if(box.roi.contains(prevFrame.keypoints[match.queryIdx].pt)){
+                box.keypoints.push_back(prevFrame.keypoints[match.queryIdx]);
+                prevId = box.boxID;
+                break;
+            }
+        }
+        currId = -1;
+        for(BoundingBox box : currFrame.boundingBoxes){
+            if(box.roi.contains(currFrame.keypoints[match.trainIdx].pt)){
+                box.keypoints.push_back(currFrame.keypoints[match.trainIdx]);
+                currId = box.boxID;
+                break;
+            }
+        }
+        if(prevId!=-1 && currId!=-1)
+            occurences[prevId][currId] += 1;
+    }
+
+    for(std::unordered_map<int,std::unordered_map<int,int>>::iterator it = occurences.begin(); it!=occurences.end(); it++ ){
+        // cout<<it->first<<":"<<endl;
+        int maxId,maxOcc = 0;
+        for(std::unordered_map<int,int>::iterator it2 = it->second.begin(); it2!=it->second.end(); it2++ ){
+            // cout<<it2->first<<" : "<<it2->second<<endl;
+            if(it2->second > maxOcc){
+                maxOcc = it2->second;
+                maxId = it2->first;
+            }
+        }
+        // cout<<"id : "<<maxId<<" occ : "<<maxOcc<<endl;
+        bbBestMatches[it->first] = maxId;
+    }
 }
