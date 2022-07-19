@@ -138,7 +138,14 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+
+
+    for(cv::DMatch match : kptMatches){
+        if(boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)){
+            boundingBox.keypoints.push_back(kptsCurr[match.trainIdx]);
+            boundingBox.kptMatches.push_back(match);
+        }
+    }
 }
 
 
@@ -147,7 +154,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
 
-    return;
+    // return;
     // compute distance ratios between all matched keypoints
     vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
     for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
