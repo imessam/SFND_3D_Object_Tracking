@@ -7,14 +7,20 @@ using namespace std;
 void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kPtsRef, cv::Mat &descSource, cv::Mat &descRef,
                       vector<cv::DMatch> &matches, string descriptorType, string matcherType, string selectorType)
 {
-    
+
+    if (descSource.cols != descRef.cols)
+    {
+        // cout<<descSource.cols<<" : "<<descRef.cols<<" , "<<descSource.rows<<" : "<<descRef.rows<<endl;
+        return;
+    }
+
     // configure matcher
     bool crossCheck = false;
     cv::Ptr<cv::DescriptorMatcher> matcher;
 
     if (matcherType.compare("MAT_BF") == 0)
     {
-        if (descSource.type() != CV_8U)
+        if (descSource.type() != CV_8U || descRef.type() != CV_8U)
         { // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
             descSource.convertTo(descSource, CV_8U);
             descRef.convertTo(descRef, CV_8U);
@@ -24,13 +30,16 @@ void matchDescriptors(vector<cv::KeyPoint> &kPtsSource, vector<cv::KeyPoint> &kP
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
     {
-        if (descSource.type() != CV_32F)
+        if (descSource.type() != CV_32F || descRef.type() != CV_32F)
         { // OpenCV bug workaround : convert binary descriptors to floating point due to a bug in current OpenCV implementation
             descSource.convertTo(descSource, CV_32F);
             descRef.convertTo(descRef, CV_32F);
         }
         matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
     }
+
+    cout << descSource.cols << " : " << descRef.cols << " , " << descSource.rows << " : "
+         << descRef.rows <<" , "<< descSource.type() << " : " << descRef.type() << endl;
 
     // perform matching task
     if (selectorType.compare("SEL_NN") == 0)
