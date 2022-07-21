@@ -12,16 +12,18 @@ from the current frame which have the highest number of matched keypoints.
 
 # FP.2 Compute Lidar-based TTC
 - To compute the TTC based on Lidar data, I used the same solution from a previous lesson.
-- Where from both previous and current frames, we get the point which have the smallest value in x coordinate.
-- And to exclude outliers, we check if this point is outside the lane width, if yes, we won't check it.
-![alt text](https://i.ibb.co/rf9Jpv0/2.png)
+- But to exclude outliers, we check if this point is outside the lane width, if yes, we won't check it.
+- Then we select the median from the checked points from previous and current frames.
+![alt text](https://i.ibb.co/M9xKJjL/new-1.png)
 
 
 # FP.3 Associate Keypoint Correspondences with Bounding Boxes
 - To associate keypoints to the bounding boxes enclosing them, I iterate through each of the matched keypoints.
-- Then for each match, I check if the matched keypoint of the current frame is inside the ROI of the bounding box.
-- If yes, then I add this keypoint to the list of keypoints enclosed by this bounding box, and also I add this match. 
-![alt text](https://i.ibb.co/Tr740b6/3.png)
+- Then for each match, I compute the euclidan distance between the matched keypoints in previous and current frames.
+- Then, I filter matches by considering only matches where the euclidan distance is between (Q1 - 1.5*IQR) <= distance <= (Q3 + 1.5*IQR)
+- Then for each of the filtered matches, I check if the keypoint in the current frame is enclosed by the bounding box ROI.
+- If yes, then I add this keypoint to the bounding box list of keypoints, and also the match.
+![alt text](https://i.ibb.co/zbLNfdT/new-2.png)
 
 # FP.4 Compute Camera-based TTC
 - To compute the TTC based on Camera data, I used the same solution from a previous lesson.
@@ -45,7 +47,6 @@ which violates our assumption that the relative velocity is constant.
 than the previous one, which turns the TTC into a negative value.
 - And that due to the assumption of the constant relative velocity, which is always positive and the ego car moves faster than the preceding car.
 ![alt text](https://i.ibb.co/XJmPV5f/Screenshot-from-2022-07-21-02-16-47.png)
-
 ![alt text](https://i.ibb.co/nrHLG3t/Screenshot-from-2022-07-21-02-17-45.png)
 
 
