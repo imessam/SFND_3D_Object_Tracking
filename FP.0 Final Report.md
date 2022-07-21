@@ -45,6 +45,7 @@ which violates our assumption that the relative velocity is constant.
 than the previous one, which turns the TTC into a negative value.
 - And that due to the assumption of the constant relative velocity, which is always positive and the ego car moves faster than the preceding car.
 ![alt text](https://i.ibb.co/XJmPV5f/Screenshot-from-2022-07-21-02-16-47.png)
+
 ![alt text](https://i.ibb.co/nrHLG3t/Screenshot-from-2022-07-21-02-17-45.png)
 
 
