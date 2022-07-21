@@ -139,9 +139,32 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
 
+    vector<float> distances;
+    double distance;
+    for(cv::DMatch match : kptMatches){
+        distance = cv::norm(kptsPrev[match.queryIdx].pt-kptsCurr[match.trainIdx].pt);
+        distances.push_back(distance);
+    }
+    
+    std::sort(distances.begin(),distances.end());
+
+    double Q1,Q3,IQR;
+    long medIndex = distances.size() / 2;
+    long medMedIndex = medIndex / 2;
+    long medMedIndex3 = distances.size() % 2 == 0? medMedIndex+medIndex : medMedIndex+medIndex+1;
+    
+
+    Q1 = medIndex % 2 == 0 ? (distances[medMedIndex] + distances[medMedIndex-1]) / 2 : distances[medMedIndex];
+    Q3 = medIndex % 2 == 0 ? (distances[medMedIndex3] + distances[medMedIndex3-1]) / 2 : distances[medMedIndex3];
+    IQR = Q3 - Q1;
+
+    double minDist = Q1 - (1.5*IQR), maxDist = Q3 + (1.5*IQR);
+
 
     for(cv::DMatch match : kptMatches){
-        if(boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)){
+        distance = cv::norm(kptsPrev[match.queryIdx].pt-kptsCurr[match.trainIdx].pt);
+        // cout<<Q1<<" , "<<Q3<<" , "<<minDist<<" , "<<distance<<" , "<<maxDist<<endl;
+        if((minDist <= distance && distance <= maxDist)  && boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)){
             boundingBox.keypoints.push_back(kptsCurr[match.trainIdx]);
             boundingBox.kptMatches.push_back(match);
         }
@@ -159,13 +182,13 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     vector<double> distRatios; // stores the distance ratios for all keypoints between curr. and prev. frame
     for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() - 1; ++it1)
     { // outer kpt. loop
-
         // get current keypoint and its matched partner in the prev. frame
         cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
         cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
 
         for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2)
         { // inner kpt.-loop
+
 
             double minDist = 100.0; // min. required distance
 
@@ -212,13 +235,13 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
     double laneWidth = 4.0; // assumed width of the ego lane
 
     // find closest distance to Lidar points within ego lane
-    double minXPrev = 1e9, minXCurr = 1e9;
+    vector<double> xPrev,xCurr;
     for (auto it = lidarPointsPrev.begin(); it != lidarPointsPrev.end(); ++it)
     {
         
         if (abs(it->y) <= laneWidth / 2.0)
         { // 3D point within ego lane?
-            minXPrev = minXPrev > it->x ? it->x : minXPrev;
+            xPrev.push_back(it->x);
         }
     }
 
@@ -227,13 +250,21 @@ void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
 
         if (abs(it->y) <= laneWidth / 2.0)
         { // 3D point within ego lane?
-            minXCurr = minXCurr > it->x ? it->x : minXCurr;
+            xCurr.push_back(it->x);
         }
     }
 
+    std::sort(xPrev.begin(), xPrev.end());
+    std::sort(xCurr.begin(), xCurr.end());
+
+    long prevMedIndex = xPrev.size() / 2, currMedIndex = xCurr.size()/2;
+    double medXPrev = xPrev.size() % 2 == 0 ? (xPrev[prevMedIndex - 1] + xPrev[prevMedIndex]) / 2.0 : xPrev[prevMedIndex];
+    double medXCurr = xCurr.size() % 2 == 0 ? (xCurr[currMedIndex - 1] + xCurr[currMedIndex]) / 2.0 : xCurr[currMedIndex];
+
+
     // compute TTC from both measurements
-    TTC = minXCurr * dT / (minXPrev - minXCurr);
-    cout<<minXPrev<<" , "<<minXCurr<<" , "<<TTC<<endl;
+    TTC = medXCurr * dT / (medXPrev - medXCurr);
+    
 }
 
 
